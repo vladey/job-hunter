@@ -1,29 +1,27 @@
-import yagmail
 import os
+import resend
 from dotenv import load_dotenv
 
 load_dotenv()
 
+resend.api_key = os.getenv("RESEND_API_KEY")
+
+
 def send_email(jobs):
-
-    yag=yagmail.SMTP(
-        os.getenv("EMAIL_USER"),
-        os.getenv("EMAIL_PASS")
-    )
-
-    body="Нови позиции:\n\n"
+    body = "<h2>Нови позиции</h2>"
 
     for job in jobs:
+        body += f"""
+        <p>
+        <b>{job['title']}</b><br>
+        {job['city']}<br>
+        <a href="{job['link']}">Отвори обявата</a>
+        </p>
+        """
 
-        body+=f"""
-{job['title']}
-{job['city']}
-{job['link']}
-
-"""
-
-    yag.send(
-        to="vladi.rusev@gmail.com",
-        subject="Нови обяви",
-        contents=body
-    )
+    resend.Emails.send({
+        "from": os.getenv("EMAIL_FROM"),
+        "to": [os.getenv("EMAIL_TO")],
+        "subject": "Нови обяви",
+        "html": body
+    })
