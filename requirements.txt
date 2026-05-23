@@ -1,7 +1,6 @@
 requests
 beautifulsoup4
 schedule
-sqlite3-api
 python-dotenv
-yagmail
 lxml
+resend
