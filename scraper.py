@@ -48,11 +48,35 @@ def search_jobs():
                     "gl": "bg"
                 }
 
-                try:
-                    search = GoogleSearch(params)
-                    results = search.get_dict()
+               try:
+    search = GoogleSearch(params)
 
-                    for result in results.get("organic_results", []):
+    results = search.get_dict()
+
+    organic = results.get("organic_results", [])
+
+    print("RESULTS FOUND:", len(organic))
+
+    for result in organic:
+
+        print(result)
+
+        title = result.get("title", "")
+        link = result.get("link", "")
+        snippet = result.get("snippet", "")
+
+        print("TITLE:", title)
+        print("LINK:", link)
+
+        if link:
+
+            jobs.append({
+                "title": title,
+                "city": city,
+                "link": link,
+                "source": site,
+                "snippet": snippet
+            })
                         title = result.get("title", "")
                         link = result.get("link", "")
                         snippet = result.get("snippet", "")
