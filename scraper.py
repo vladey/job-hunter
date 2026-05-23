@@ -1,42 +1,50 @@
-def search_jobs_bg():
-    return []
-
-
-def search_zaplata_bg():
-    return []
-
-
-def search_jobtiger_bg():
-    return []
-
-
-def search_linkedin():
-    return []
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import quote
 
 
 def search_jobs():
+    positions = [
+        "Plant Manager",
+        "Operations Manager",
+        "Production Manager",
+        "Site Manager",
+        "Site Director"
+    ]
+
+    cities = ["Пловдив", "София"]
     jobs = []
 
-    jobs += search_jobs_bg()
-    jobs += search_zaplata_bg()
-    jobs += search_jobtiger_bg()
-    jobs += search_linkedin()
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    unique = []
-    seen = set()
+    for position in positions:
+        url = f"https://www.jobs.bg/front_job_search.php?keywords={quote(position)}"
 
-    for job in jobs:
-        if job["link"] not in seen:
-            seen.add(job["link"])
-            unique.append(job)
+        print("Checking:", url)
 
-    return unique[:20]
-    for job in jobs:
+        try:
+            response = requests.get(url, headers=headers, timeout=20)
 
-        if job["link"] not in seen:
+            print("Status code:", response.status_code)
+            print("Page length:", len(response.text))
 
-            seen.add(job["link"])
+            soup = BeautifulSoup(response.text, "html.parser")
 
-            unique_jobs.append(job)
+            page_text = soup.get_text(" ", strip=True)
 
-    return unique_jobs[:10]
+            for city in cities:
+                if city in page_text:
+                    jobs.append({
+                        "title": f"{position} - намерен текст за {city}",
+                        "city": city,
+                        "link": url
+                    })
+
+        except Exception as e:
+            print("ERROR:", e)
+
+    print("Jobs found:", len(jobs))
+
+    return jobs
