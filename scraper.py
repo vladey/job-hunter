@@ -1,69 +1,36 @@
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import quote
+def search_jobs_bg():
+    return []
+
+
+def search_zaplata_bg():
+    return []
+
+
+def search_jobtiger_bg():
+    return []
+
+
+def search_linkedin():
+    return []
 
 
 def search_jobs():
-
-    positions = [
-        "Plant Manager",
-        "Operations Manager",
-        "Factory Director",
-        "Production Director",
-        "General Manager",
-        "COO",
-        "Production Manager",
-        "Site Director",
-        "Site Manager"
-    ]
-
-    cities = ["Пловдив", "София"]
-
     jobs = []
 
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+    jobs += search_jobs_bg()
+    jobs += search_zaplata_bg()
+    jobs += search_jobtiger_bg()
+    jobs += search_linkedin()
 
-    for position in positions:
-
-        search = quote(position)
-
-        url = f"https://www.jobs.bg/front_job_search.php?keywords={search}"
-
-        try:
-
-            response = requests.get(url, headers=headers, timeout=20)
-
-            soup = BeautifulSoup(response.text, "html.parser")
-
-            links = soup.find_all("a")
-
-            for link in links:
-
-                text = link.get_text(strip=True)
-
-                href = link.get("href")
-
-                if href and text:
-
-                    for city in cities:
-
-                        if city.lower() in text.lower():
-
-                            jobs.append({
-                                "title": text,
-                                "city": city,
-                                "link": href
-                            })
-
-        except Exception as e:
-            print(e)
-
-    unique_jobs = []
-
+    unique = []
     seen = set()
 
+    for job in jobs:
+        if job["link"] not in seen:
+            seen.add(job["link"])
+            unique.append(job)
+
+    return unique[:20]
     for job in jobs:
 
         if job["link"] not in seen:
