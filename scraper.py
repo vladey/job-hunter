@@ -1,17 +1,10 @@
 def search_jobs():
-
-    positions=[
-        "Plant Manager",
-        "Operations Manager",
-        "Factory Director",
-        "Production Manager",
-        "Site Director"
+    jobs = [
+        {
+            "title": "TEST: Plant Manager",
+            "city": "Пловдив",
+            "link": "https://jobs.bg"
+        }
     ]
-
-    cities=["Пловдив","София"]
-
-    jobs=[]
-
-    # тук после добавяме LinkedIn/Jobs.bg/Zaplata
 
     return jobs
