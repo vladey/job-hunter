@@ -1,50 +1,82 @@
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import quote
+import os
+from serpapi import GoogleSearch
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def search_jobs():
+    api_key = os.getenv("SERPAPI_KEY")
+
     positions = [
         "Plant Manager",
         "Operations Manager",
+        "Factory Director",
+        "Production Director",
+        "General Manager",
+        "COO",
         "Production Manager",
-        "Site Manager",
-        "Site Director"
+        "Site Director",
+        "Site Manager"
     ]
 
-    cities = ["Пловдив", "София"]
+    cities = ["Пловдив", "София", "Plovdiv", "Sofia"]
+
+    sites = [
+        "jobs.bg",
+        "zaplata.bg",
+        "jobtiger.bg",
+        "rabota.bg",
+        "linkedin.com/jobs"
+    ]
+
     jobs = []
 
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-
-    for position in positions:
-        url = f"https://www.jobs.bg/front_job_search.php?keywords={quote(position)}"
-
-        print("Checking:", url)
-
-        try:
-            response = requests.get(url, headers=headers, timeout=20)
-
-            print("Status code:", response.status_code)
-            print("Page length:", len(response.text))
-
-            soup = BeautifulSoup(response.text, "html.parser")
-
-            page_text = soup.get_text(" ", strip=True)
-
+    for site in sites:
+        for position in positions:
             for city in cities:
-                if city in page_text:
-                    jobs.append({
-                        "title": f"{position} - намерен текст за {city}",
-                        "city": city,
-                        "link": url
-                    })
+                query = f'site:{site} "{position}" "{city}" job OR работа'
 
-        except Exception as e:
-            print("ERROR:", e)
+                print("Searching:", query)
 
-    print("Jobs found:", len(jobs))
+                params = {
+                    "engine": "google",
+                    "q": query,
+                    "api_key": api_key,
+                    "num": 5,
+                    "hl": "bg",
+                    "gl": "bg"
+                }
 
-    return jobs
+                try:
+                    search = GoogleSearch(params)
+                    results = search.get_dict()
+
+                    for result in results.get("organic_results", []):
+                        title = result.get("title", "")
+                        link = result.get("link", "")
+                        snippet = result.get("snippet", "")
+
+                        if link:
+                            jobs.append({
+                                "title": title,
+                                "city": city,
+                                "link": link,
+                                "source": site,
+                                "snippet": snippet
+                            })
+
+                except Exception as e:
+                    print("ERROR:", e)
+
+    unique = []
+    seen = set()
+
+    for job in jobs:
+        if job["link"] not in seen:
+            seen.add(job["link"])
+            unique.append(job)
+
+    print("Jobs found:", len(unique))
+
+    return unique[:20]
