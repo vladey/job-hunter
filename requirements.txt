@@ -1,7 +1,4 @@
-requests
-beautifulsoup4
 schedule
 python-dotenv
-lxml
 resend
-playwright
+beautifulsoup4
