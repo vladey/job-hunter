@@ -4,21 +4,36 @@ from playwright.sync_api import sync_playwright
 def search_jobs():
 
     queries = [
-        "Plant Manager Sofia",
-        "Plant Manager Plovdiv",
-        "Operations Manager Sofia",
-        "Operations Manager Plovdiv",
-        "Production Manager Sofia",
-        "Production Manager Plovdiv",
-        "Site Manager Sofia",
-        "Site Manager Plovdiv"
+        "Plant Manager Sofia jobs.bg",
+        "Plant Manager Plovdiv jobs.bg",
+        "Operations Manager Sofia jobs.bg",
+        "Operations Manager Plovdiv jobs.bg",
+        "Production Manager Sofia jobs.bg",
+        "Production Manager Plovdiv jobs.bg",
+        "Site Manager Sofia jobs.bg",
+        "Site Manager Plovdiv jobs.bg",
+        "Plant Manager Sofia zaplata.bg",
+        "Operations Manager Sofia zaplata.bg",
+        "Production Manager Sofia zaplata.bg",
+        "Plant Manager Sofia jobtiger.bg",
+        "Operations Manager Sofia jobtiger.bg",
+        "Production Manager Sofia jobtiger.bg",
+        "Plant Manager Sofia linkedin jobs",
+        "Operations Manager Sofia linkedin jobs",
+        "Production Manager Sofia linkedin jobs"
     ]
 
-    sites = [
+    allowed_sites = [
         "jobs.bg",
         "zaplata.bg",
         "jobtiger.bg",
         "linkedin.com/jobs"
+    ]
+
+    bad_words = [
+        "Sign in", "Images", "Videos", "News", "Forums",
+        "Shopping", "Short videos", "Maps", "Books", "Flights",
+        "All", "Search", "Tools"
     ]
 
     jobs = []
@@ -29,57 +44,56 @@ def search_jobs():
 
         page = browser.new_page()
 
-        for site in sites:
+        for query in queries:
 
-            for query in queries:
+            url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
 
-                url = f"https://www.google.com/search?q=site:{site}+{query.replace(' ', '+')}"
+            print("Opening:", url)
 
-                print("Opening:", url)
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                page.wait_for_timeout(3000)
 
-                try:
+                links = page.locator("a").all()
 
-                    page.goto(url, timeout=30000)
+                for link in links:
 
-                    page.wait_for_timeout(3000)
+                    href = link.get_attribute("href")
+                    text = link.inner_text().strip()
 
-                    links = page.locator("a").all()
+                    if not href or not text:
+                        continue
 
-                    for link in links:
+                    if text in bad_words:
+                        continue
 
-                        href = link.get_attribute("href")
+                    if href.startswith("/"):
+                        continue
 
-                        text = link.inner_text()
+                    if "google.com" in href:
+                        continue
 
-                        if not href:
-                            continue
+                    if not any(site in href for site in allowed_sites):
+                        continue
 
-                        if site not in href:
-                            continue
+                    jobs.append({
+                        "title": text[:120],
+                        "city": "Пловдив/София",
+                        "link": href,
+                        "snippet": query
+                    })
 
-                        jobs.append({
-                            "title": text[:100],
-                            "city": query,
-                            "link": href,
-                            "snippet": site
-                        })
-
-                except Exception as e:
-
-                    print("ERROR:", e)
+            except Exception as e:
+                print("ERROR:", e)
 
         browser.close()
 
     unique = []
-
     seen = set()
 
     for job in jobs:
-
         if job["link"] not in seen:
-
             seen.add(job["link"])
-
             unique.append(job)
 
     print("Jobs found:", len(unique))
