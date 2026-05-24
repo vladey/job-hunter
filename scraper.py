@@ -5,13 +5,6 @@ def search_jobs():
 
     urls = [
         "https://www.zaplata.bg/search/?q=Plant+Manager",
-        "https://www.zaplata.bg/search/?q=Operations+Manager",
-        "https://www.zaplata.bg/search/?q=Production+Manager",
-        "https://www.zaplata.bg/search/?q=Site+Manager",
-        "https://www.zaplata.bg/search/?q=Factory+Director",
-        "https://www.zaplata.bg/search/?q=Production+Director",
-        "https://www.zaplata.bg/search/?q=General+Manager",
-        "https://www.zaplata.bg/search/?q=COO",
     ]
 
     jobs = []
@@ -23,48 +16,32 @@ def search_jobs():
         for url in urls:
             print("Opening:", url)
 
-            try:
-                page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                page.wait_for_timeout(5000)
+            page.goto(url, wait_until="domcontentloaded", timeout=45000)
+            page.wait_for_timeout(5000)
 
-                links = page.locator("a").all()
-                print("Links found:", len(links))
+            links = page.locator("a").all()
+            print("Links found:", len(links))
 
-                for link in links:
-                    href = link.get_attribute("href")
-                    text = link.inner_text().strip()
+            count = 0
 
-                    if not href:
-                        continue
+            for link in links:
+                href = link.get_attribute("href")
+                text = link.inner_text().strip()
 
-                    if href.startswith("/"):
-                        href = "https://www.zaplata.bg" + href
+                if not href:
+                    continue
 
-                    if "/rabota/" not in href and "/obiava/" not in href:
-                        continue
+                print("HREF:", href)
+                print("TEXT:", text[:100])
+                print("---")
 
-                    title = text if text else "Обява от Zaplata.bg"
+                count += 1
 
-                    jobs.append({
-                        "title": title[:120],
-                        "city": "Пловдив/София",
-                        "link": href,
-                        "snippet": url
-                    })
-
-            except Exception as e:
-                print("ERROR:", e)
+                if count >= 50:
+                    break
 
         browser.close()
 
-    unique = []
-    seen = set()
+    print("Jobs found:", len(jobs))
 
-    for job in jobs:
-        if job["link"] not in seen:
-            seen.add(job["link"])
-            unique.append(job)
-
-    print("Jobs found:", len(unique))
-
-    return unique[:20]
+    return jobs
