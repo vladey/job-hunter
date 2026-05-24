@@ -75,6 +75,25 @@ def get_job_emails():
         "завод"
     ]
 
+    score_words = [
+        "plant manager",
+        "operations manager",
+        "production manager",
+        "site manager",
+        "site director",
+        "factory director",
+        "production director",
+        "general manager",
+        "coo",
+        "chief operating officer",
+        "директор",
+        "мениджър",
+        "ръководител производство",
+        "директор производство",
+        "оперативен директор",
+        "директор завод"
+    ]
+
     good_domains = [
         "jobs.bg",
         "linkedin.com",
@@ -197,6 +216,7 @@ def get_job_emails():
     for job in unique:
         link_l = job["link"].lower()
         title_l = job["title"].lower()
+        snippet_l = job.get("snippet", "").lower()
 
         if not any(domain in link_l for domain in good_domains):
             continue
@@ -207,8 +227,18 @@ def get_job_emails():
         if any(word in title_l for word in bad_words):
             continue
 
+        combined = f"{title_l} {link_l} {snippet_l}"
+
+        score = sum(1 for word in score_words if word in combined)
+
+        if score == 0:
+            continue
+
+        job["score"] = score
         filtered.append(job)
+
+    filtered = sorted(filtered, key=lambda x: x.get("score", 0), reverse=True)
 
     print("FILTERED JOBS:", len(filtered))
 
-    return filtered[:15]
+    return filtered[:10]
