@@ -1,108 +1,84 @@
-import os
-from serpapi import GoogleSearch
-from dotenv import load_dotenv
-
-load_dotenv()
+from playwright.sync_api import sync_playwright
 
 
 def search_jobs():
-    api_key = os.getenv("SERPAPI_KEY")
-
     queries = [
-        'Plant Manager Sofia jobs.bg',
-        'Plant Manager Plovdiv jobs.bg',
-        'Operations Manager Sofia jobs.bg',
-        'Operations Manager Plovdiv jobs.bg',
-        'Production Manager Sofia jobs.bg',
-        'Production Manager Plovdiv jobs.bg',
-        'Site Manager Sofia jobs.bg',
-        'Site Manager Plovdiv jobs.bg',
-        'Factory Director Sofia jobs.bg',
-        'General Manager Sofia jobs.bg',
-
-        'Plant Manager Sofia zaplata.bg',
-        'Plant Manager Plovdiv zaplata.bg',
-        'Operations Manager Sofia zaplata.bg',
-        'Operations Manager Plovdiv zaplata.bg',
-        'Production Manager Sofia zaplata.bg',
-        'Production Manager Plovdiv zaplata.bg',
-        'Site Manager Sofia zaplata.bg',
-        'Site Manager Plovdiv zaplata.bg',
-
-        'Plant Manager Sofia LinkedIn jobs',
-        'Operations Manager Sofia LinkedIn jobs',
-        'Production Manager Sofia LinkedIn jobs',
-        'Site Manager Sofia LinkedIn jobs',
-        'Factory Director Sofia LinkedIn jobs',
-
-        'Plant Manager Bulgaria jobs',
-        'Operations Manager Bulgaria jobs',
-        'Production Manager Bulgaria jobs',
-        'Site Manager Bulgaria jobs'
+        "Plant Manager Sofia",
+        "Plant Manager Plovdiv",
+        "Operations Manager Sofia",
+        "Operations Manager Plovdiv",
+        "Production Manager Sofia",
+        "Production Manager Plovdiv",
+        "Site Manager Sofia",
+        "Site Manager Plovdiv",
+        "Factory Director Sofia",
+        "Production Director Sofia",
+        "General Manager Sofia",
+        "COO Sofia",
     ]
 
-    allowed_sites = [
+    sites = [
         "jobs.bg",
         "zaplata.bg",
         "jobtiger.bg",
         "rabota.bg",
-        "linkedin.com",
-        "karieri.bg"
+        "linkedin.com/jobs",
     ]
 
     jobs = []
 
-    if not api_key:
-        print("ERROR: SERPAPI_KEY missing")
-        return []
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
 
-    for query in queries:
-        print("Searching:", query)
+        page = browser.new_page(
+            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+        )
 
-        params = {
-            "engine": "google",
-            "q": query,
-            "api_key": api_key,
-            "num": 10,
-            "hl": "en",
-            "gl": "bg"
-        }
+        for site in sites:
+            for query in queries:
+                search_url = f"https://www.google.com/search?q=site:{site}+{query.replace(' ', '+')}"
 
-        try:
-            search = GoogleSearch(params)
-            results = search.get_dict()
+                print("Opening:", search_url)
 
-            if "error" in results:
-                print("SERPAPI ERROR:", results["error"])
-                continue
+                try:
+                    page.goto(search_url, wait_until="domcontentloaded", timeout=30000)
+                    page.wait_for_timeout(2000)
 
-            organic = results.get("organic_results", [])
-            print("RESULTS:", len(organic))
+                    links = page.locator("a").all()
 
-            for item in organic:
-                title = item.get("title", "")
-                link = item.get("link", "")
-                snippet = item.get("snippet", "")
+                    for link in links:
+                        href = link.get_attribute("href")
+                        text = link.inner_text().strip()
 
-                if link and any(site in link for site in allowed_sites):
-                    jobs.append({
-                        "title": title,
-                        "city": "Пловдив/София",
-                        "link": link,
-                        "snippet": snippet
-                    })
+                        if not href or not text:
+                            continue
 
-        except Exception as e:
-            print("ERROR:", e)
+                        if site not in href:
+                            continue
 
-    unique_jobs = []
+                        if "google" in href:
+                            continue
+
+                        jobs.append({
+                            "title": text[:120],
+                            "city": "Пловдив/София",
+                            "link": href,
+                            "snippet": query
+                        })
+
+                except Exception as e:
+                    print("ERROR:", e)
+
+        browser.close()
+
+    unique = []
     seen = set()
 
     for job in jobs:
         if job["link"] not in seen:
             seen.add(job["link"])
-            unique_jobs.append(job)
+            unique.append(job)
 
-    print("Jobs found:", len(unique_jobs))
+    print("Jobs found:", len(unique))
 
-    return unique_jobs[:20]
+    return unique[:20]
