@@ -22,63 +22,60 @@ def search_jobs():
 
     cities = ["Пловдив", "София", "Plovdiv", "Sofia"]
 
-    sites = [
-        "jobs.bg",
-        "zaplata.bg",
-        "jobtiger.bg",
-        "rabota.bg",
-        "linkedin.com/jobs"
-    ]
-
     jobs = []
 
     if not api_key:
         print("ERROR: SERPAPI_KEY is missing")
         return jobs
 
-    for site in sites:
-        for position in positions:
-            for city in cities:
-                query = f'site:{site} "{position}" "{city}"'
+    for position in positions:
+        for city in cities:
+            query = f'"{position}" "{city}" jobs OR работа OR обява'
 
-                print("Searching:", query)
+            print("Searching:", query)
 
-                params = {
-                    "engine": "google",
-                    "q": query,
-                    "api_key": api_key,
-                    "num": 5,
-                    "hl": "bg",
-                    "gl": "bg"
-                }
+            params = {
+                "engine": "google",
+                "q": query,
+                "api_key": api_key,
+                "num": 10,
+                "hl": "bg",
+                "gl": "bg"
+            }
 
-                try:
-                    search = GoogleSearch(params)
-                    results = search.get_dict()
+            try:
+                search = GoogleSearch(params)
+                results = search.get_dict()
 
-                    organic = results.get("organic_results", [])
+                organic = results.get("organic_results", [])
+                print("RESULTS FOUND:", len(organic))
 
-                    print("RESULTS FOUND:", len(organic))
+                for result in organic:
+                    title = result.get("title", "")
+                    link = result.get("link", "")
+                    snippet = result.get("snippet", "")
 
-                    for result in organic:
-                        title = result.get("title", "")
-                        link = result.get("link", "")
-                        snippet = result.get("snippet", "")
+                    allowed_sites = [
+                        "jobs.bg",
+                        "zaplata.bg",
+                        "jobtiger.bg",
+                        "rabota.bg",
+                        "linkedin.com",
+                        "karieri.bg",
+                        "indeed.com"
+                    ]
 
-                        print("TITLE:", title)
-                        print("LINK:", link)
+                    if link and any(site in link for site in allowed_sites):
+                        jobs.append({
+                            "title": title,
+                            "city": city,
+                            "link": link,
+                            "source": link,
+                            "snippet": snippet
+                        })
 
-                        if link:
-                            jobs.append({
-                                "title": title,
-                                "city": city,
-                                "link": link,
-                                "source": site,
-                                "snippet": snippet
-                            })
-
-                except Exception as e:
-                    print("ERROR:", e)
+            except Exception as e:
+                print("ERROR:", e)
 
     unique_jobs = []
     seen = set()
