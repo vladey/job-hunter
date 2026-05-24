@@ -8,12 +8,49 @@ def search_jobs():
         "https://www.zaplata.bg/search/?q=Production+Manager",
         "https://www.zaplata.bg/search/?q=Site+Manager",
         "https://www.zaplata.bg/search/?q=Factory+Director",
+        "https://www.zaplata.bg/search/?q=Production+Director",
         "https://www.zaplata.bg/search/?q=General+Manager",
+        "https://www.zaplata.bg/search/?q=COO",
     ]
 
-    must_include = [
-        "manager", "director", "plant", "production",
-        "operations", "site", "factory", "general"
+    target_phrases = [
+        "plant manager",
+        "operations manager",
+        "factory director",
+        "production director",
+        "general manager",
+        "production manager",
+        "site director",
+        "site manager",
+        "chief operating officer",
+        "coo",
+        "директор производство",
+        "директор операции",
+        "оперативен директор",
+        "производствен мениджър",
+        "мениджър производство",
+        "ръководител производство",
+        "управител производство",
+        "директор завод",
+        "управител завод",
+        "ръководител завод",
+    ]
+
+    forbidden_words = [
+        "шофьор", "driver",
+        "чистач", "cleaner",
+        "продавач", "seller", "sales assistant",
+        "касиер", "cashier",
+        "готвач", "cook",
+        "сервитьор", "waiter",
+        "барман", "bartender",
+        "охранител", "security",
+        "складов", "warehouse",
+        "общ работник", "worker",
+        "монтажник", "technician",
+        "оператор машина", "machine operator",
+        "куриер", "courier",
+        "хигиенист",
     ]
 
     jobs = []
@@ -46,7 +83,10 @@ def search_jobs():
 
                     text_l = text.lower()
 
-                    if not any(word in text_l for word in must_include):
+                    if any(word in text_l for word in forbidden_words):
+                        continue
+
+                    if not any(phrase in text_l for phrase in target_phrases):
                         continue
 
                     if href.startswith("/"):
