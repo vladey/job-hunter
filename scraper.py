@@ -15,24 +15,6 @@ def search_jobs():
         "https://www.jobtiger.bg/obiavi-za-rabota/?q=Site%20Manager",
     ]
 
-    keywords = [
-        "Plant Manager",
-        "Operations Manager",
-        "Production Manager",
-        "Site Manager",
-        "Factory Director",
-        "Production Director",
-        "General Manager",
-        "COO"
-    ]
-
-    cities = [
-        "София",
-        "Пловдив",
-        "Sofia",
-        "Plovdiv"
-    ]
-
     jobs = []
 
     with sync_playwright() as p:
@@ -49,9 +31,11 @@ def search_jobs():
 
             try:
                 page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                page.wait_for_timeout(4000)
+                page.wait_for_timeout(5000)
 
                 links = page.locator("a").all()
+
+                print("Links found:", len(links))
 
                 for link in links:
                     href = link.get_attribute("href")
@@ -60,15 +44,7 @@ def search_jobs():
                     if not href or not text:
                         continue
 
-                    text_l = text.lower()
-
-                    keyword_match = any(k.lower() in text_l for k in keywords)
-                    city_match = any(c.lower() in text_l for c in cities)
-
-                    if not keyword_match:
-                        continue
-
-                    if not city_match:
+                    if len(text) < 5:
                         continue
 
                     if href.startswith("/"):
@@ -77,12 +53,13 @@ def search_jobs():
                         elif "jobtiger.bg" in url:
                             href = "https://www.jobtiger.bg" + href
 
-                    jobs.append({
-                        "title": text[:120],
-                        "city": "Пловдив/София",
-                        "link": href,
-                        "snippet": url
-                    })
+                    if "zaplata.bg" in href or "jobtiger.bg" in href:
+                        jobs.append({
+                            "title": text[:120],
+                            "city": "Пловдив/София",
+                            "link": href,
+                            "snippet": url
+                        })
 
             except Exception as e:
                 print("ERROR:", e)
