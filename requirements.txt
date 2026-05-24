@@ -4,4 +4,4 @@ schedule
 python-dotenv
 lxml
 resend
-google-search-results
+playwright
