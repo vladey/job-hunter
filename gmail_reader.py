@@ -75,6 +75,32 @@ def get_job_emails():
         "завод"
     ]
 
+    good_domains = [
+        "jobs.bg",
+        "linkedin.com",
+        "zaplata.bg",
+        "jobtiger.bg",
+    ]
+
+    bad_words = [
+        "unsubscribe",
+        "preferences",
+        "help",
+        "support",
+        "privacy",
+        "terms",
+        "notification",
+        "premium",
+        "learning",
+        "advice",
+        "article",
+        "salary-guide",
+        "settings",
+        "login",
+        "signin",
+        "share",
+    ]
+
     imap = imaplib.IMAP4_SSL("imap.gmail.com")
     imap.login(user, password)
     imap.select("INBOX")
@@ -84,7 +110,7 @@ def get_job_emails():
 
     results = []
 
-    for mail_id in email_ids[-50:]:
+    for mail_id in email_ids[-80:]:
         _, msg_data = imap.fetch(mail_id, "(RFC822)")
 
         for response_part in msg_data:
@@ -106,7 +132,6 @@ def get_job_emails():
                 continue
 
             html_body, text_body = get_body(msg)
-
             found_links = []
 
             if html_body:
@@ -157,10 +182,33 @@ def get_job_emails():
     seen = set()
 
     for job in results:
-        if job["link"] not in seen:
-            seen.add(job["link"])
-            unique.append(job)
+        link = job["link"]
+
+        if link in seen:
+            continue
+
+        seen.add(link)
+        unique.append(job)
 
     print("JOB LINKS FOUND:", len(unique))
 
-    return unique[:30]
+    filtered = []
+
+    for job in unique:
+        link_l = job["link"].lower()
+        title_l = job["title"].lower()
+
+        if not any(domain in link_l for domain in good_domains):
+            continue
+
+        if any(word in link_l for word in bad_words):
+            continue
+
+        if any(word in title_l for word in bad_words):
+            continue
+
+        filtered.append(job)
+
+    print("FILTERED JOBS:", len(filtered))
+
+    return filtered[:15]
